@@ -56,3 +56,25 @@ jobs:
           name: npm-dist-diff.html
           path: ./reports/npm-dist-diff.html
           if-no-files-found: ignore
+  # Abloh's publish job. It runs no code of yours, builds nothing and measures nothing:
+  # it takes the report the Abloh step in .github/workflows/ci.yml left on this
+  # run and files it. That step is there and this job is here because GitHub caps a
+  # called workflow's jobs at the permissions its caller grants, and this file is the
+  # caller.
+  #
+  # It is a separate job because GitHub grants id-token: write to a whole JOB and
+  # not to one step: putting it on the job that measures would hand the same identity to
+  # every step that runs there, Abloh's and everybody else's. Here it reaches Abloh's
+  # step and nothing else. It authorizes one thing, filing this report with Abloh, and
+  # carries no write access to your repository. Declaring the block below takes no
+  # grant away from anything, because this job is new and had none.
+  abloh-publish:
+    needs: ci
+    # Runs even when the job above failed - a trial that stopped is the report you need.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Abloh publish
+        uses: Vero-Technology/abloh-action/attest@596ef9a2ed0e0570244e6575faee05c285ea0376
